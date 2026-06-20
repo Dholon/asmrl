@@ -87,7 +87,7 @@
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans antialiased relative">
-    
+
     <!-- Global Antigravity Particles -->
     <canvas id="global-particles" class="fixed inset-0 w-full h-full pointer-events-none z-40 opacity-40"></canvas>
 
@@ -96,7 +96,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-20 items-center">
                 <div class="flex-shrink-0 flex items-center">
-                    <img src="images/bracu_logo.png" alt="BRACU Logo" class="h-10 bg-white rounded p-1 mr-3 object-contain">
+                    <img src="images/bracu_logo.png" alt="BRACU Logo"
+                        class="h-10 bg-white rounded p-1 mr-3 object-contain">
                     <a href="#" class="font-bold text-2xl tracking-tight">ASMRL</a>
                     <span class="ml-3 border-l border-white/30 pl-3 text-sm font-medium hidden md:block">Brac University
                         | MPS</span>
@@ -301,8 +302,9 @@
                     class="snap-center shrink-0 w-[85vw] sm:w-80 md:w-96 bg-white rounded-lg shadow-sm border border-gray-200 p-6 flex flex-col">
                     <span class="text-xs font-semibold text-bracu uppercase tracking-wider mb-2">November 2025</span>
                     <h4 class="text-lg font-bold text-gray-900 mb-2">Thesis Defense Success</h4>
-                    <p class="text-sm text-gray-600 flex-grow">Successful M.Sc. defense investigating the structural and
-                        optical properties of pristine and doped Cesium Tin Chloride perovskite systems.</p>
+                    <p class="text-sm text-gray-600 flex-grow">Successful B.Sc. defense investigating the structural and
+                        optical properties of pristine and doped perovskite systems in DFT. Device simulation has been
+                        conducted uding SCAPS-1D</p>
                 </div>
                 <!-- News Item 4 -->
                 <div
@@ -400,30 +402,29 @@
                         </div>
                     </div>
                     <h4 class="mt-4 text-lg font-bold text-gray-900">High-Performance Computing Cluster</h4>
-                    <p class="text-sm text-gray-600 mt-1">AMD Threadripper & NVIDIA RTX Arrays powering DFT simulations.
+                    <p class="text-sm text-gray-600 mt-1">AMD Threadripper & NVIDIA A100 & RTX GPU's powering DFT
+                        simulations.
                     </p>
                 </div>
 
                 <!-- Image Slide 2 -->
                 <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
                     <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="images/furnace.png"
-                            alt="Nabertherm Furnace"
+                        <img src="images/furnace.png" alt="Nabertherm Furnace"
                             class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                         </div>
                     </div>
                     <h4 class="mt-4 text-lg font-bold text-gray-900">Nabertherm High-Temperature Furnace</h4>
-                    <p class="text-sm text-gray-600 mt-1">Thermal processing up to 1750°C for advanced perovskite
+                    <p class="text-sm text-gray-600 mt-1">Thermal processing up to 1750°C for advanced ferrites
                         synthesis.</p>
                 </div>
 
                 <!-- Image Slide 3 -->
                 <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
                     <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="images/solar simulator.webp"
-                            alt="Characterization Equipment"
+                        <img src="images/solar simulator.webp" alt="Characterization Equipment"
                             class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
                         <div
                             class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -532,21 +533,22 @@
     <!-- Research Domains -->
     <section id="research" class="py-20 bg-white relative overflow-hidden">
         <!-- Background Band Structure SVG -->
-        <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-5 z-0" preserveAspectRatio="none" viewBox="0 0 1000 400">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-5 z-0" preserveAspectRatio="none"
+            viewBox="0 0 1000 400">
             <!-- Grid lines for high symmetry points -->
             <path d="M200,0 V400 M500,0 V400 M800,0 V400" stroke="#004B87" stroke-width="1" stroke-dasharray="4 4" />
-            
+
             <!-- Band structure curves -->
-            <path id="band-structure-path" 
-                  d="M0,200 Q100,100 200,200 T500,300 T800,150 T1000,200 M0,250 Q100,350 200,250 T500,150 T800,280 T1000,220 M0,100 Q100,0 200,120 T500,50 T800,100 T1000,80" 
-                  fill="none" stroke="#004B87" stroke-width="3" />
-            <path id="band-structure-path-2" 
-                  d="M0,300 Q100,400 200,280 T500,380 T800,320 T1000,350" 
-                  fill="none" stroke="#22d3ee" stroke-width="2" />
-            
+            <path id="band-structure-path"
+                d="M0,200 Q100,100 200,200 T500,300 T800,150 T1000,200 M0,250 Q100,350 200,250 T500,150 T800,280 T1000,220 M0,100 Q100,0 200,120 T500,50 T800,100 T1000,80"
+                fill="none" stroke="#004B87" stroke-width="3" />
+            <path id="band-structure-path-2" d="M0,300 Q100,400 200,280 T500,380 T800,320 T1000,350" fill="none"
+                stroke="#22d3ee" stroke-width="2" />
+
             <!-- Fermi level -->
-            <line x1="0" y1="225" x2="1000" y2="225" stroke="#ef4444" stroke-width="1" stroke-dasharray="10 5" opacity="0.5" />
-            
+            <line x1="0" y1="225" x2="1000" y2="225" stroke="#ef4444" stroke-width="1" stroke-dasharray="10 5"
+                opacity="0.5" />
+
             <!-- High symmetry labels -->
             <text x="200" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">Γ</text>
             <text x="500" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">X</text>
@@ -1031,24 +1033,24 @@
                     const projectedPoints = [];
 
                     // Determine hover state for phase transition
-                    const centerRotV = rotate3D([0,0,0], c.rx, c.ry, c.rz);
+                    const centerRotV = rotate3D([0, 0, 0], c.rx, c.ry, c.rz);
                     const scaleCenter = (400 * c.scale) / (c.z + centerRotV[2]);
                     const cx2d = (c.x + centerRotV[0]) * scaleCenter + (width / 2);
                     const cy2d = (c.y + centerRotV[1]) * scaleCenter + (height / 2);
-                    
-                    const distToMouse = Math.sqrt((cx2d - mouseX)**2 + (cy2d - mouseY)**2);
+
+                    const distToMouse = Math.sqrt((cx2d - mouseX) ** 2 + (cy2d - mouseY) ** 2);
                     const hoverRadius = 60 * c.scale;
-                    
+
                     if (distToMouse < hoverRadius && (c.baseType === 'cubic' || c.baseType === 'octahedral')) {
                         c.transitionProgress = Math.min(c.transitionProgress + 0.05, 1);
                     } else {
                         c.transitionProgress = Math.max(c.transitionProgress - 0.05, 0);
                     }
-                    
+
                     let targetGeoKey = c.baseType;
                     if (c.baseType === 'cubic') targetGeoKey = 'orthorhombic';
                     if (c.baseType === 'octahedral') targetGeoKey = 'tilted_octahedral';
-                    
+
                     const targetGeo = geometries[targetGeoKey];
 
                     // Transform and project vertices
@@ -1092,21 +1094,21 @@
             const researchSection = document.getElementById('research');
             const bandPath1 = document.getElementById('band-structure-path');
             const bandPath2 = document.getElementById('band-structure-path-2');
-            
+
             if (bandPath1 && bandPath2 && researchSection) {
                 const len1 = bandPath1.getTotalLength();
                 const len2 = bandPath2.getTotalLength();
-                
+
                 bandPath1.style.strokeDasharray = len1;
                 bandPath1.style.strokeDashoffset = len1;
                 bandPath2.style.strokeDasharray = len2;
                 bandPath2.style.strokeDashoffset = len2;
-                
+
                 window.addEventListener('scroll', () => {
                     requestAnimationFrame(() => {
                         const rect = researchSection.getBoundingClientRect();
                         const windowHeight = window.innerHeight;
-                        
+
                         let progress = 0;
                         if (rect.top < windowHeight && rect.bottom > 0) {
                             const totalScrollable = windowHeight + rect.height;
@@ -1115,15 +1117,15 @@
                         } else if (rect.bottom <= 0) {
                             progress = 1;
                         }
-                        
+
                         // Use a simple easing function for a dramatic reveal
                         const easeOut = 1 - Math.pow(1 - progress, 3);
-                        
+
                         bandPath1.style.strokeDashoffset = len1 * (1 - easeOut);
                         bandPath2.style.strokeDashoffset = len2 * (1 - easeOut);
                     });
                 }, { passive: true });
-                
+
                 // Trigger once on load
                 window.dispatchEvent(new Event('scroll'));
             }
@@ -1136,7 +1138,7 @@
             const canvas = document.getElementById('global-particles');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            
+
             let width, height;
             function resize() {
                 width = canvas.width = window.innerWidth;
@@ -1173,7 +1175,7 @@
                 ctx.clearRect(0, 0, width, height);
                 ctx.fillStyle = '#004B87';
                 ctx.strokeStyle = '#004B87';
-                
+
                 particles.forEach((p, index) => {
                     p.x += p.vx;
                     p.y += p.vy;
@@ -1208,13 +1210,13 @@
                         ctx.moveTo(p.x, p.y);
                         ctx.lineTo(mouse.x, mouse.y);
                         ctx.stroke();
-                        
+
                         // Slight attraction
                         p.x += (mouse.x - p.x) * 0.005;
                         p.y += (mouse.y - p.y) * 0.005;
                     }
                 });
-                
+
                 requestAnimationFrame(animate);
             }
             animate();
