@@ -12,10 +12,320 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Icons -->
-    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.min.js">
+        // ==========================================
+        // Researcher Physics Grid (Apple Watch Style)
+        // ==========================================
+        window.addEventListener('load', () => {
+            const container = document.getElementById('researcher-grid-container');
+            const world = document.getElementById('researcher-grid-world');
+            if(!container || !world) return;
+
+            const students = [
+                { id: 1, name: "Alice Johnson", session: "Spring 2026", img: "https://placehold.co/200x200/2563eb/ffffff?text=AJ", radius: 65 },
+                { id: 2, name: "Bob Smith", session: "Fall 2025", img: "https://placehold.co/200x200/16a34a/ffffff?text=BS", radius: 85 },
+                { id: 3, name: "Carol Davis", session: "Spring 2025", img: "https://placehold.co/200x200/d97706/ffffff?text=CD", radius: 75 },
+                { id: 4, name: "David Lee", session: "Fall 2024", img: "https://placehold.co/200x200/dc2626/ffffff?text=DL", radius: 60 },
+                { id: 5, name: "Eva Martinez", session: "Spring 2024", img: "https://placehold.co/200x200/9333ea/ffffff?text=EM", radius: 80 }
+            ];
+
+            const nodes = [];
+
+            students.forEach(student => {
+                const el = document.createElement('div');
+                el.className = 'researcher-node';
+                el.style.width = (student.radius * 2) + 'px';
+                el.style.height = (student.radius * 2) + 'px';
+                
+                el.innerHTML = `
+                    <img src="${student.img}" alt="${student.name}">
+                    <div class="researcher-info">
+                        <p class="text-white font-bold text-sm leading-tight">${student.name}</p>
+                        <p class="text-gray-300 text-[10px] mt-1">${student.session}</p>
+                    </div>
+                `;
+
+                // Hover logic for dynamic expansion
+                el.addEventListener('mouseenter', () => {
+                    el.style.width = (student.radius * 2.8) + 'px';
+                    el.style.height = (student.radius * 2.8) + 'px';
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.width = (student.radius * 2) + 'px';
+                    el.style.height = (student.radius * 2) + 'px';
+                });
+
+                world.appendChild(el);
+
+                nodes.push({
+                    el: el,
+                    x: (Math.random() - 0.5) * 300,
+                    y: (Math.random() - 0.5) * 300,
+                    vx: 0,
+                    vy: 0,
+                    baseRadius: student.radius
+                });
+            });
+
+            // Physics Loop
+            function updatePhysics() {
+                const centerForce = 0.015; // Attraction to center
+                const damping = 0.85; // Friction
+
+                // Dynamic radius check based on current rendered size
+                nodes.forEach(node => {
+                    const rect = node.el.getBoundingClientRect();
+                    node.currentRadius = rect.width / 2;
+                });
+
+                for(let i=0; i<nodes.length; i++) {
+                    const n1 = nodes[i];
+                    
+                    // Center attraction
+                    n1.vx += (0 - n1.x) * centerForce;
+                    n1.vy += (0 - n1.y) * centerForce;
+
+                    // Repulsion from others
+                    for(let j=i+1; j<nodes.length; j++) {
+                        const n2 = nodes[j];
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const minDist = n1.currentRadius + n2.currentRadius + 15; // 15px padding between nodes
+
+                        if(dist < minDist && dist > 0) {
+                            const force = (minDist - dist) * 0.15;
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            n1.vx -= fx;
+                            n1.vy -= fy;
+                            n2.vx += fx;
+                            n2.vy += fy;
+                        }
+                    }
+
+                    n1.vx *= damping;
+                    n1.vy *= damping;
+                    n1.x += n1.vx;
+                    n1.y += n1.vy;
+
+                    // Apply position directly
+                    n1.el.style.left = n1.x + 'px';
+                    n1.el.style.top = n1.y + 'px';
+                }
+                requestAnimationFrame(updatePhysics);
+            }
+            updatePhysics();
+
+            // Dragging Logic (Pan the world)
+            let isDragging = false;
+            let startX, startY;
+            let worldX = 0, worldY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - worldX;
+                startY = e.clientY - worldY;
+                container.classList.add('cursor-grabbing');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if(!isDragging) return;
+                worldX = e.clientX - startX;
+                worldY = e.clientY - startY;
+                
+                // Limit panning to prevent losing the cluster
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.classList.remove('cursor-grabbing');
+            });
+            
+            // Touch support for mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX - worldX;
+                startY = e.touches[0].clientY - worldY;
+            }, {passive: true});
+            
+            window.addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+                worldX = e.touches[0].clientX - startX;
+                worldY = e.touches[0].clientY - startY;
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            }, {passive: true});
+            
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        });
+
+    </script>
 
     <!-- Tailwind CSS (CDN for immediate deployment without build tools) -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+        // ==========================================
+        // Researcher Physics Grid (Apple Watch Style)
+        // ==========================================
+        window.addEventListener('load', () => {
+            const container = document.getElementById('researcher-grid-container');
+            const world = document.getElementById('researcher-grid-world');
+            if(!container || !world) return;
+
+            const students = [
+                { id: 1, name: "Alice Johnson", session: "Spring 2026", img: "https://placehold.co/200x200/2563eb/ffffff?text=AJ", radius: 65 },
+                { id: 2, name: "Bob Smith", session: "Fall 2025", img: "https://placehold.co/200x200/16a34a/ffffff?text=BS", radius: 85 },
+                { id: 3, name: "Carol Davis", session: "Spring 2025", img: "https://placehold.co/200x200/d97706/ffffff?text=CD", radius: 75 },
+                { id: 4, name: "David Lee", session: "Fall 2024", img: "https://placehold.co/200x200/dc2626/ffffff?text=DL", radius: 60 },
+                { id: 5, name: "Eva Martinez", session: "Spring 2024", img: "https://placehold.co/200x200/9333ea/ffffff?text=EM", radius: 80 }
+            ];
+
+            const nodes = [];
+
+            students.forEach(student => {
+                const el = document.createElement('div');
+                el.className = 'researcher-node';
+                el.style.width = (student.radius * 2) + 'px';
+                el.style.height = (student.radius * 2) + 'px';
+                
+                el.innerHTML = `
+                    <img src="${student.img}" alt="${student.name}">
+                    <div class="researcher-info">
+                        <p class="text-white font-bold text-sm leading-tight">${student.name}</p>
+                        <p class="text-gray-300 text-[10px] mt-1">${student.session}</p>
+                    </div>
+                `;
+
+                // Hover logic for dynamic expansion
+                el.addEventListener('mouseenter', () => {
+                    el.style.width = (student.radius * 2.8) + 'px';
+                    el.style.height = (student.radius * 2.8) + 'px';
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.width = (student.radius * 2) + 'px';
+                    el.style.height = (student.radius * 2) + 'px';
+                });
+
+                world.appendChild(el);
+
+                nodes.push({
+                    el: el,
+                    x: (Math.random() - 0.5) * 300,
+                    y: (Math.random() - 0.5) * 300,
+                    vx: 0,
+                    vy: 0,
+                    baseRadius: student.radius
+                });
+            });
+
+            // Physics Loop
+            function updatePhysics() {
+                const centerForce = 0.015; // Attraction to center
+                const damping = 0.85; // Friction
+
+                // Dynamic radius check based on current rendered size
+                nodes.forEach(node => {
+                    const rect = node.el.getBoundingClientRect();
+                    node.currentRadius = rect.width / 2;
+                });
+
+                for(let i=0; i<nodes.length; i++) {
+                    const n1 = nodes[i];
+                    
+                    // Center attraction
+                    n1.vx += (0 - n1.x) * centerForce;
+                    n1.vy += (0 - n1.y) * centerForce;
+
+                    // Repulsion from others
+                    for(let j=i+1; j<nodes.length; j++) {
+                        const n2 = nodes[j];
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const minDist = n1.currentRadius + n2.currentRadius + 15; // 15px padding between nodes
+
+                        if(dist < minDist && dist > 0) {
+                            const force = (minDist - dist) * 0.15;
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            n1.vx -= fx;
+                            n1.vy -= fy;
+                            n2.vx += fx;
+                            n2.vy += fy;
+                        }
+                    }
+
+                    n1.vx *= damping;
+                    n1.vy *= damping;
+                    n1.x += n1.vx;
+                    n1.y += n1.vy;
+
+                    // Apply position directly
+                    n1.el.style.left = n1.x + 'px';
+                    n1.el.style.top = n1.y + 'px';
+                }
+                requestAnimationFrame(updatePhysics);
+            }
+            updatePhysics();
+
+            // Dragging Logic (Pan the world)
+            let isDragging = false;
+            let startX, startY;
+            let worldX = 0, worldY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - worldX;
+                startY = e.clientY - worldY;
+                container.classList.add('cursor-grabbing');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if(!isDragging) return;
+                worldX = e.clientX - startX;
+                worldY = e.clientY - startY;
+                
+                // Limit panning to prevent losing the cluster
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.classList.remove('cursor-grabbing');
+            });
+            
+            // Touch support for mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX - worldX;
+                startY = e.touches[0].clientY - worldY;
+            }, {passive: true});
+            
+            window.addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+                worldX = e.touches[0].clientX - startX;
+                worldY = e.touches[0].clientY - startY;
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            }, {passive: true});
+            
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        });
+
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -31,6 +341,161 @@
                 }
             }
         }
+    
+        // ==========================================
+        // Researcher Physics Grid (Apple Watch Style)
+        // ==========================================
+        window.addEventListener('load', () => {
+            const container = document.getElementById('researcher-grid-container');
+            const world = document.getElementById('researcher-grid-world');
+            if(!container || !world) return;
+
+            const students = [
+                { id: 1, name: "Alice Johnson", session: "Spring 2026", img: "https://placehold.co/200x200/2563eb/ffffff?text=AJ", radius: 65 },
+                { id: 2, name: "Bob Smith", session: "Fall 2025", img: "https://placehold.co/200x200/16a34a/ffffff?text=BS", radius: 85 },
+                { id: 3, name: "Carol Davis", session: "Spring 2025", img: "https://placehold.co/200x200/d97706/ffffff?text=CD", radius: 75 },
+                { id: 4, name: "David Lee", session: "Fall 2024", img: "https://placehold.co/200x200/dc2626/ffffff?text=DL", radius: 60 },
+                { id: 5, name: "Eva Martinez", session: "Spring 2024", img: "https://placehold.co/200x200/9333ea/ffffff?text=EM", radius: 80 }
+            ];
+
+            const nodes = [];
+
+            students.forEach(student => {
+                const el = document.createElement('div');
+                el.className = 'researcher-node';
+                el.style.width = (student.radius * 2) + 'px';
+                el.style.height = (student.radius * 2) + 'px';
+                
+                el.innerHTML = `
+                    <img src="${student.img}" alt="${student.name}">
+                    <div class="researcher-info">
+                        <p class="text-white font-bold text-sm leading-tight">${student.name}</p>
+                        <p class="text-gray-300 text-[10px] mt-1">${student.session}</p>
+                    </div>
+                `;
+
+                // Hover logic for dynamic expansion
+                el.addEventListener('mouseenter', () => {
+                    el.style.width = (student.radius * 2.8) + 'px';
+                    el.style.height = (student.radius * 2.8) + 'px';
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.width = (student.radius * 2) + 'px';
+                    el.style.height = (student.radius * 2) + 'px';
+                });
+
+                world.appendChild(el);
+
+                nodes.push({
+                    el: el,
+                    x: (Math.random() - 0.5) * 300,
+                    y: (Math.random() - 0.5) * 300,
+                    vx: 0,
+                    vy: 0,
+                    baseRadius: student.radius
+                });
+            });
+
+            // Physics Loop
+            function updatePhysics() {
+                const centerForce = 0.015; // Attraction to center
+                const damping = 0.85; // Friction
+
+                // Dynamic radius check based on current rendered size
+                nodes.forEach(node => {
+                    const rect = node.el.getBoundingClientRect();
+                    node.currentRadius = rect.width / 2;
+                });
+
+                for(let i=0; i<nodes.length; i++) {
+                    const n1 = nodes[i];
+                    
+                    // Center attraction
+                    n1.vx += (0 - n1.x) * centerForce;
+                    n1.vy += (0 - n1.y) * centerForce;
+
+                    // Repulsion from others
+                    for(let j=i+1; j<nodes.length; j++) {
+                        const n2 = nodes[j];
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const minDist = n1.currentRadius + n2.currentRadius + 15; // 15px padding between nodes
+
+                        if(dist < minDist && dist > 0) {
+                            const force = (minDist - dist) * 0.15;
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            n1.vx -= fx;
+                            n1.vy -= fy;
+                            n2.vx += fx;
+                            n2.vy += fy;
+                        }
+                    }
+
+                    n1.vx *= damping;
+                    n1.vy *= damping;
+                    n1.x += n1.vx;
+                    n1.y += n1.vy;
+
+                    // Apply position directly
+                    n1.el.style.left = n1.x + 'px';
+                    n1.el.style.top = n1.y + 'px';
+                }
+                requestAnimationFrame(updatePhysics);
+            }
+            updatePhysics();
+
+            // Dragging Logic (Pan the world)
+            let isDragging = false;
+            let startX, startY;
+            let worldX = 0, worldY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - worldX;
+                startY = e.clientY - worldY;
+                container.classList.add('cursor-grabbing');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if(!isDragging) return;
+                worldX = e.clientX - startX;
+                worldY = e.clientY - startY;
+                
+                // Limit panning to prevent losing the cluster
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.classList.remove('cursor-grabbing');
+            });
+            
+            // Touch support for mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX - worldX;
+                startY = e.touches[0].clientY - worldY;
+            }, {passive: true});
+            
+            window.addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+                worldX = e.touches[0].clientX - startX;
+                worldY = e.touches[0].clientY - startY;
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            }, {passive: true});
+            
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        });
+
     </script>
 
     <style>
@@ -83,7 +548,78 @@
             transform: translateY(0) scale(1);
             visibility: visible;
         }
+    
+        .nav-link {
+            position: relative;
+            text-decoration: none;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -4px;
+            left: 0;
+            background-color: #bfdbfe;
+            transition: width 0.3s ease-in-out;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+    
+        /* Apple Watch Grid Physics UI */
+        .researcher-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background-color: #1f2937;
+            border: 3px solid #3b82f6;
+            transition: width 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), z-index 0s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            will-change: transform, left, top;
+            user-select: none;
+            z-index: 10;
+        }
+        .researcher-node:hover {
+            z-index: 50;
+            border-color: #60a5fa;
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.4);
+        }
+        .researcher-node img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s, transform 0.3s;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        .researcher-node:hover img {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .researcher-info {
+            position: absolute;
+            bottom: -40px;
+            opacity: 0;
+            text-align: center;
+            width: 100%;
+            transition: opacity 0.3s, bottom 0.3s;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 30px 10px 15px 10px;
+            pointer-events: none;
+        }
+        .researcher-node:hover .researcher-info {
+            opacity: 1;
+            bottom: 0;
+        }
     </style>
+
+    <!-- Google Model Viewer -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-800 font-sans antialiased relative">
@@ -99,17 +635,17 @@
                     <img src="images/bracu_logo.png" alt="BRACU Logo"
                         class="h-10 bg-white rounded p-1 mr-3 object-contain">
                     <a href="#" class="font-bold text-2xl tracking-tight">ASMRL</a>
-                    <span class="ml-3 border-l border-white/30 pl-3 text-sm font-medium hidden md:block">Brac University
+                    <span class="ml-3 border-l border-white/30 pl-3 text-sm font-medium hidden md:block">BRAC University
                         | MPS</span>
                 </div>
                 <div class="hidden md:flex space-x-8">
-                    <a href="#home" class="hover:text-blue-200 transition-colors font-medium">Home</a>
-                    <a href="#news" class="hover:text-blue-200 transition-colors font-medium">Updates</a>
-                    <a href="#research" class="hover:text-blue-200 transition-colors font-medium">Research</a>
-                    <a href="#infrastructure"
-                        class="hover:text-blue-200 transition-colors font-medium">Infrastructure</a>
-                    <a href="#publications" class="hover:text-blue-200 transition-colors font-medium">Publications</a>
-                    <a href="#team" class="hover:text-blue-200 transition-colors font-medium">Team</a>
+                    <a href="#home" class="nav-link hover:text-blue-200 transition-colors font-medium">Home</a>
+                    <a href="#research" class="nav-link hover:text-blue-200 transition-colors font-medium">Research</a>
+                    <a href="#infrastructure" class="nav-link hover:text-blue-200 transition-colors font-medium">Infrastructure</a>
+                    <a href="#gallery" class="nav-link hover:text-blue-200 transition-colors font-medium">Resources</a>
+                    <a href="#news" class="nav-link hover:text-blue-200 transition-colors font-medium">Updates</a>
+                    <a href="#team" class="nav-link hover:text-blue-200 transition-colors font-medium">Team</a>
+                    <a href="#publications" class="nav-link hover:text-blue-200 transition-colors font-medium">Publications</a>
                 </div>
                 <!-- Mobile Menu Button -->
                 <div class="md:hidden flex items-center">
@@ -122,139 +658,453 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden bg-bracuDark px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <a href="#home" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Home</a>
-            <a href="#news" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Updates</a>
             <a href="#research" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Research</a>
-            <a href="#infrastructure"
-                class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Infrastructure</a>
-            <a href="#publications"
-                class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Publications</a>
+            <a href="#infrastructure" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Infrastructure</a>
+            <a href="#gallery" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Resources</a>
+            <a href="#news" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Updates</a>
             <a href="#team" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Team</a>
+            <a href="#publications" class="block px-3 py-2 text-white hover:bg-bracu rounded-md font-medium">Publications</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section id="home" class="relative bg-white overflow-hidden border-b border-gray-200">
-        <div class="max-w-7xl mx-auto">
-            <div
-                class="relative z-10 pb-8 bg-white sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32 pt-16 lg:pt-24 px-4 sm:px-6 lg:px-8">
-                <div class="sm:text-center lg:text-left">
-                    <span
-                        class="text-sm font-bold tracking-wider text-bracu uppercase bg-blue-50 px-3 py-1 rounded-full">Solid-State
-                        Physics & HPC</span>
-                    <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl mt-6">
-                        <span class="block">Advanced Smart</span>
+    <section id="home" class="relative bg-white overflow-hidden border-b border-gray-200 py-16 lg:py-24">
+        <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center h-full">
+                
+                <!-- Left Column: Carousel -->
+                <div class="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg border border-gray-200 group">
+                    <div id="hero-carousel" class="w-full h-full relative">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100" src="https://placehold.co/600x800/004B87/ffffff?text=BRACU+Campus" alt="Campus">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/600x800/f8fafc/004B87?text=Publication+Figure+1" alt="Publication 1">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/600x800/e2e8f0/004B87?text=Lab+Equipment" alt="Equipment">
+                    </div>
+                    <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-bold text-bracu shadow">ASMRL Facilities & Research</div>
+                </div>
+
+                <!-- Middle Column: Text -->
+                <div class="text-center flex flex-col justify-center px-4">
+                    <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl lg:text-5xl mt-6">
+                        <span class="block">Center for Advanced Smart</span>
                         <span class="block text-bracu">Materials Research</span>
                     </h1>
-                    <p
-                        class="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                        Bridging theoretical computation and empirical synthesis. ASMRL accelerates the discovery of
-                        next-generation optoelectronics, energy storage, and superconducting systems through rigorous
-                        <i>ab initio</i> modeling and high-temperature fabrication.
+                    <p class="mt-4 text-base text-gray-500 sm:text-lg mx-auto md:text-xl">
+                        Bridging theoretical computation and empirical synthesis. ASMRL accelerates the discovery of next-generation optoelectronics, energy storage, and superconducting systems through rigorous <i>ab initio</i> modeling and high-temperature fabrication.
                     </p>
-                    <div class="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                        <div class="rounded-md shadow">
-                            <a href="#research"
-                                class="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-bracu hover:bg-bracuLight transition-colors md:py-4 md:text-lg">
-                                Explore Research
-                            </a>
+                    <!-- Removed buttons per user request -->
+                </div>
+                <!-- Right Column: Interactive Zone -->
+                <div id="hero-interactive-zone" class="h-[400px] w-full bg-white flex flex-col items-center justify-center overflow-hidden rounded-xl border border-gray-200 relative shadow-inner">
+                    <!-- Background Grid effect (Darker for white bg) -->
+                    <div class="absolute inset-0 opacity-10 bg-[linear-gradient(#004B8733_1px,transparent_1px),linear-gradient(90deg,#004B8733_1px,transparent_1px)] bg-[size:40px_40px] z-0 pointer-events-none">
+                    </div>
+
+                    <!-- Dynamic Crystallographic Canvas -->
+                    <canvas id="crystal-canvas" class="absolute inset-0 w-full h-full z-0 opacity-80 pointer-events-none"></canvas>
+
+                    <!-- Mathematical Workflow Container -->
+                    <div class="relative w-[320px] h-[320px] z-10 pointer-events-auto">
+
+                        <!-- SVG Connecting Lines (Data Flow) -->
+                        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 320">
+                            <!-- Base Track -->
+                            <path d="M 160 40 L 260 240 L 60 240 Z" fill="none" stroke="rgba(0, 75, 135, 0.15)" stroke-width="2" />
+                            <!-- Animated Packets -->
+                            <path d="M 160 40 L 260 240 L 60 240 Z" fill="none" stroke="#004B87" stroke-width="2" stroke-dasharray="10 30" class="animate-flow" />
+                        </svg>
+
+                        <!-- Central Core Label -->
+                        <div class="absolute left-[136px] top-[150px] flex flex-col items-center justify-center w-12">
+                            <i data-lucide="refresh-cw" class="w-5 h-5 text-gray-600 animate-[spin_5s_linear_infinite]"></i>
+                            <p class="text-[9px] text-gray-600 font-mono mt-1 tracking-widest uppercase">Loop</p>
                         </div>
-                        <div class="mt-3 sm:mt-0 sm:ml-3">
-                            <a href="#publications"
-                                class="w-full flex items-center justify-center px-8 py-3 border border-gray-300 text-base font-medium rounded-md text-bracu bg-white hover:bg-gray-50 transition-colors md:py-4 md:text-lg">
-                                View Publications
-                            </a>
+
+                        <!-- Node 1: Quantum Mechanics (Top) -->
+                        <div class="absolute left-[128px] top-[8px] flex flex-col items-center node-hover group cursor-crosshair">
+                            <div class="w-16 h-16 rounded-full bg-white border-2 border-bracu flex items-center justify-center shadow-[0_0_15px_rgba(0,75,135,0.15)] group-hover:scale-110 group-hover:border-bracuLight transition-all duration-300 relative z-20">
+                                <i data-lucide="atom" class="w-8 h-8 text-bracu group-hover:text-bracuLight transition-colors"></i>
+                            </div>
+                            <div class="absolute top-20 text-center w-40 node-text bg-white/95 backdrop-blur border border-gray-200 p-2 rounded-lg shadow-xl z-30">
+                                <p class="text-xs font-bold text-gray-900 uppercase tracking-wider">Quantum Mech.</p>
+                                <p class="text-[10px] text-gray-600 mt-1 leading-tight">Theoretical foundation & wavefunctions</p>
+                            </div>
+                        </div>
+
+                        <!-- Node 2: DFT Simulation (Bottom Right) -->
+                        <div class="absolute left-[228px] top-[208px] flex flex-col items-center node-hover group cursor-crosshair">
+                            <div class="w-16 h-16 rounded-full bg-white border-2 border-blue-500 flex items-center justify-center shadow-[0_0_15px_rgba(59,130,246,0.15)] group-hover:scale-110 group-hover:border-blue-400 transition-all duration-300 relative z-20">
+                                <i data-lucide="cpu" class="w-8 h-8 text-blue-500 group-hover:text-blue-400 transition-colors"></i>
+                            </div>
+                            <div class="absolute top-20 text-center w-40 node-text bg-white/95 backdrop-blur border border-gray-200 p-2 rounded-lg shadow-xl z-30">
+                                <p class="text-xs font-bold text-gray-900 uppercase tracking-wider">DFT Modeling</p>
+                                <p class="text-[10px] text-gray-600 mt-1 leading-tight">HPC structural phase simulations</p>
+                            </div>
+                        </div>
+
+                        <!-- Node 3: Empirical Synthesis (Bottom Left) -->
+                        <div class="absolute left-[28px] top-[208px] flex flex-col items-center node-hover group cursor-crosshair">
+                            <div class="w-16 h-16 rounded-full bg-white border-2 border-orange-500 flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.15)] group-hover:scale-110 group-hover:border-orange-400 transition-all duration-300 relative z-20">
+                                <i data-lucide="flask-conical" class="w-8 h-8 text-orange-500 group-hover:text-orange-400 transition-colors"></i>
+                            </div>
+                            <div class="absolute top-20 text-center w-40 node-text bg-white/95 backdrop-blur border border-gray-200 p-2 rounded-lg shadow-xl z-30">
+                                <p class="text-xs font-bold text-gray-900 uppercase tracking-wider">Synthesis</p>
+                                <p class="text-[10px] text-gray-600 mt-1 leading-tight">1750°C Furnace & physical fabrication</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Hero Interactive Workflow Animation -->
-        <div id="hero-interactive-zone"
-            class="min-h-[400px] lg:min-h-0 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2 bg-gray-900 flex flex-col items-center justify-center overflow-hidden border-l border-gray-800 relative">
-            <!-- Background Grid effect -->
-            <div
-                class="absolute inset-0 opacity-10 bg-[linear-gradient(#ffffff33_1px,transparent_1px),linear-gradient(90deg,#ffffff33_1px,transparent_1px)] bg-[size:40px_40px] z-0 pointer-events-none">
-            </div>
-
-            <!-- Dynamic Crystallographic Canvas -->
-            <canvas id="crystal-canvas"
-                class="absolute inset-0 w-full h-full z-0 opacity-80 pointer-events-none"></canvas>
-
-            <!-- Mathematical Workflow Container -->
-            <div class="relative w-[320px] h-[320px] z-10 pointer-events-auto">
-
-                <!-- SVG Connecting Lines (Data Flow) -->
-                <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 320 320">
-                    <!-- Base Track -->
-                    <path d="M 160 40 L 260 240 L 60 240 Z" fill="none" stroke="rgba(59, 130, 246, 0.15)"
-                        stroke-width="2" />
-                    <!-- Animated Packets -->
-                    <path d="M 160 40 L 260 240 L 60 240 Z" fill="none" stroke="#60a5fa" stroke-width="2"
-                        stroke-dasharray="10 30" class="animate-flow" />
-                </svg>
-
-                <!-- Central Core Label -->
-                <div class="absolute left-[136px] top-[150px] flex flex-col items-center justify-center w-12">
-                    <i data-lucide="refresh-cw" class="w-5 h-5 text-gray-600 animate-[spin_5s_linear_infinite]"></i>
-                    <p class="text-[9px] text-gray-500 font-mono mt-1 tracking-widest uppercase">Loop</p>
-                </div>
-
-                <!-- Node 1: Quantum Mechanics (Top) -->
-                <div
-                    class="absolute left-[128px] top-[8px] flex flex-col items-center node-hover group cursor-crosshair">
-                    <div
-                        class="w-16 h-16 rounded-full bg-gray-800 border-2 border-blue-400 flex items-center justify-center shadow-[0_0_20px_rgba(96,165,250,0.3)] group-hover:scale-110 group-hover:border-white transition-all duration-300 relative z-20">
-                        <i data-lucide="atom"
-                            class="w-8 h-8 text-blue-400 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <div
-                        class="absolute top-20 text-center w-40 node-text bg-gray-800/90 backdrop-blur border border-gray-700 p-2 rounded-lg shadow-xl z-30">
-                        <p class="text-xs font-bold text-white uppercase tracking-wider">Quantum Mech.</p>
-                        <p class="text-[10px] text-gray-400 mt-1 leading-tight">Theoretical foundation & wavefunctions
-                        </p>
+                    <!-- Global Caption -->
+                    <div class="absolute bottom-6 text-center px-6 w-full pointer-events-none">
+                        <p class="text-xs font-bold text-bracu uppercase tracking-widest">Iterative Discovery Pipeline</p>
+                        <p class="text-[11px] text-gray-600 mt-2 max-w-sm mx-auto leading-relaxed hidden sm:block">Theoretical predictions actively feed physical synthesis, validating structural models in real-time.</p>
                     </div>
                 </div>
-
-                <!-- Node 2: DFT Simulation (Bottom Right) -->
-                <div
-                    class="absolute left-[228px] top-[208px] flex flex-col items-center node-hover group cursor-crosshair">
-                    <div
-                        class="w-16 h-16 rounded-full bg-gray-800 border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_20px_rgba(34,211,238,0.3)] group-hover:scale-110 group-hover:border-white transition-all duration-300 relative z-20">
-                        <i data-lucide="cpu" class="w-8 h-8 text-cyan-400 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <div
-                        class="absolute top-20 text-center w-40 node-text bg-gray-800/90 backdrop-blur border border-gray-700 p-2 rounded-lg shadow-xl z-30">
-                        <p class="text-xs font-bold text-white uppercase tracking-wider">DFT Modeling</p>
-                        <p class="text-[10px] text-gray-400 mt-1 leading-tight">HPC structural phase simulations</p>
-                    </div>
-                </div>
-
-                <!-- Node 3: Empirical Synthesis (Bottom Left) -->
-                <div
-                    class="absolute left-[28px] top-[208px] flex flex-col items-center node-hover group cursor-crosshair">
-                    <div
-                        class="w-16 h-16 rounded-full bg-gray-800 border-2 border-orange-400 flex items-center justify-center shadow-[0_0_20px_rgba(251,146,60,0.3)] group-hover:scale-110 group-hover:border-white transition-all duration-300 relative z-20">
-                        <i data-lucide="flask-conical"
-                            class="w-8 h-8 text-orange-400 group-hover:text-white transition-colors"></i>
-                    </div>
-                    <div
-                        class="absolute top-20 text-center w-40 node-text bg-gray-800/90 backdrop-blur border border-gray-700 p-2 rounded-lg shadow-xl z-30">
-                        <p class="text-xs font-bold text-white uppercase tracking-wider">Synthesis</p>
-                        <p class="text-[10px] text-gray-400 mt-1 leading-tight">1750°C Furnace & physical fabrication
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Global Caption -->
-            <div class="absolute bottom-10 text-center px-6 w-full pointer-events-none">
-                <p class="text-xs font-bold text-blue-400 uppercase tracking-widest">Iterative Discovery Pipeline</p>
-                <p class="text-[11px] text-gray-500 mt-2 max-w-sm mx-auto leading-relaxed hidden sm:block">Theoretical
-                    predictions actively feed physical synthesis, validating structural models in real-time.</p>
             </div>
         </div>
     </section>
+
+
+    <!-- Research Domains -->
+    <section id="research" class="py-20 bg-white relative overflow-hidden">
+        <!-- Background Band Structure SVG -->
+        <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-5 z-0" preserveAspectRatio="none"
+            viewBox="0 0 1000 400">
+            <!-- Grid lines for high symmetry points -->
+            <path d="M200,0 V400 M500,0 V400 M800,0 V400" stroke="#004B87" stroke-width="1" stroke-dasharray="4 4" />
+
+            <!-- Band structure curves -->
+            <path id="band-structure-path"
+                d="M0,200 Q100,100 200,200 T500,300 T800,150 T1000,200 M0,250 Q100,350 200,250 T500,150 T800,280 T1000,220 M0,100 Q100,0 200,120 T500,50 T800,100 T1000,80"
+                fill="none" stroke="#004B87" stroke-width="3" />
+            <path id="band-structure-path-2" d="M0,300 Q100,400 200,280 T500,380 T800,320 T1000,350" fill="none"
+                stroke="#22d3ee" stroke-width="2" />
+
+            <!-- Fermi level -->
+            <line x1="0" y1="225" x2="1000" y2="225" stroke="#ef4444" stroke-width="1" stroke-dasharray="10 5"
+                opacity="0.5" />
+
+            <!-- High symmetry labels -->
+            <text x="200" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">Γ</text>
+            <text x="500" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">X</text>
+            <text x="800" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">M</text>
+        </svg>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-base text-bracu font-semibold tracking-wide uppercase">Core Focus Areas</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                    Targeted Material Discovery
+                </p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Domain 1 -->
+                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
+                    <div
+                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
+                        <i data-lucide="sun" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Photovoltaics & Energy Storage</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Computational design and physical synthesis of highly stable, cost-effective novel solar
+                        absorbers (perovskite structures). Parallel development of high-capacity solid-state hydrogen
+                        storage networks.
+                    </p>
+                </div>
+                <!-- Domain 2 -->
+                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
+                    <div
+                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
+                        <i data-lucide="thermometer-snowflake" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Thermodynamics & Superconductivity</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Investigating structural phase transitions for magnetocaloric refrigeration to enable
+                        eco-friendly cooling. <i>Ab initio</i> structural modeling of complex lattices to develop
+                        high-temperature superconductors.
+                    </p>
+                </div>
+                <!-- Domain 3 -->
+                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
+                    <div
+                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
+                        <i data-lucide="zap" class="h-6 w-6"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">Optoelectronic Semiconductors</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">
+                        Rigorous electronic structure calculations and characterization of ultra-wide-bandgap materials
+                        (e.g., Ga2O3) for high-power electronics, alongside fundamental III-V optoelectronic materials
+                        (e.g., GaAs).
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Infrastructure (The Dual-Node System) -->
+    <section id="infrastructure" class="py-20 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-base text-blue-400 font-semibold tracking-wide uppercase">Technical Baseline</h2>
+                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight sm:text-4xl">
+                    Closed-Loop Laboratory Resources
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12">
+                <!-- Node A -->
+                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
+                    <div class="flex items-center mb-6">
+                        <i data-lucide="cpu" class="h-8 w-8 text-blue-400 mr-4"></i>
+                        <h3 class="text-2xl font-bold">Theoretical Computation</h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">Architecture:</strong> Custom HPC clusters driven by AMD
+                                Ryzen Threadripper processors (7000/9000 Series) with 1TB+ combined RAM.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">GPU Acceleration:</strong> Enterprise-grade NVIDIA RTX 6000
+                                Pro and RTX 4090 arrays dedicated to parallelized tensor operations.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">Methodology:</strong> Density Functional Theory (DFT) and
+                                AI/ML-driven quantum material simulations.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Node B -->
+                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
+                    <div class="flex items-center mb-6">
+                        <i data-lucide="flask-conical" class="h-8 w-8 text-blue-400 mr-4"></i>
+                        <h3 class="text-2xl font-bold">Empirical Synthesis</h3>
+                    </div>
+                    <ul class="space-y-4 text-gray-300">
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">Thermal Processing:</strong> Precision Nabertherm
+                                High-Temperature Furnace (rated to 1750°C).</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">Fabrication:</strong> End-to-end capabilities including
+                                Ball Mill, Hydraulic Presser, Sonicator, and Laurell Spin Processor.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
+                            <span><strong class="text-white">Characterization:</strong> Advanced Keithley Source Measure
+                                Unit (SMU) system and calibrated Solar Simulator for optical validation.</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Lab Resource Photo Slider (Updated to 10-Item Slider) -->
+    <!-- Resources Section (3D Model Grid) -->
+    <section id="gallery" class="py-20 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="mb-12 text-center">
+                <h2 class="text-base text-bracu font-semibold tracking-wide uppercase">Infrastructure</h2>
+                <h3 class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">Resources & Interactive Equipment</h3>
+                <p class="text-lg text-gray-500 mt-4 max-w-2xl mx-auto">Explore our empirical synthesis and characterization nodes in full 3D. Drag to rotate and scroll to zoom the interactive models below.</p>
+            </div>
+
+            <!-- 3D Equipment Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Equipment Card 1: HPC Cluster -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative">
+                        <model-viewer 
+                            src="models/hpc_cluster.glb" 
+                            alt="3D model of High-Performance Computing Cluster" 
+                            auto-rotate 
+                            camera-controls 
+                            shadow-intensity="1"
+                            class="w-full h-full outline-none">
+                            <div slot="poster" class="absolute inset-0 flex items-center justify-center bg-gray-200">
+                                <div class="text-center">
+                                    <i data-lucide="server" class="w-12 h-12 text-gray-400 mx-auto animate-pulse mb-2"></i>
+                                    <span class="text-xs text-gray-500 font-medium">Loading 3D Model...</span>
+                                </div>
+                            </div>
+                        </model-viewer>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">High-Performance Computing Cluster</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Advanced AMD Threadripper & NVIDIA A100 GPU architecture powering heavy density functional theory (DFT) simulations and quantum mechanical modeling.</p>
+                        <a href="equipment-hpc.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-bracu hover:bg-bracuLight transition-colors shadow-sm">
+                            Explore Technical Specs
+                            <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 2: Furnace -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative">
+                        <model-viewer 
+                            src="models/nabertherm_furnace.glb" 
+                            alt="3D model of Nabertherm High-Temperature Furnace" 
+                            auto-rotate 
+                            camera-controls 
+                            shadow-intensity="1"
+                            class="w-full h-full outline-none">
+                            <div slot="poster" class="absolute inset-0 flex items-center justify-center bg-gray-200">
+                                <div class="text-center">
+                                    <i data-lucide="flame" class="w-12 h-12 text-gray-400 mx-auto animate-pulse mb-2"></i>
+                                    <span class="text-xs text-gray-500 font-medium">Loading 3D Model...</span>
+                                </div>
+                            </div>
+                        </model-viewer>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Nabertherm High-Temperature Furnace</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Precision thermal processing equipment capable of reaching 1750°C, utilized for advanced ferrites synthesis and high-temperature solid-state reactions.</p>
+                        <a href="equipment-furnace.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-bracu hover:bg-bracuLight transition-colors shadow-sm">
+                            Explore Capabilities
+                            <i data-lucide="arrow-right" class="ml-2 w-5 h-5"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 3: Solar Simulator -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="sun" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Solar Simulator</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Solar Simulator module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 4: Spin Processor -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="cpu" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Spin Processor</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Spin Processor module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 5: Ball Milling Machine -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="cog" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Ball Milling Machine</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Ball Milling Machine module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 6: Hydraulic Press -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="hammer" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Hydraulic Press</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Hydraulic Press module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 7: Glovebox System -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="box" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Glovebox System</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Glovebox System module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 8: Chemical Fume Hood -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="wind" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Chemical Fume Hood</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Chemical Fume Hood module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 9: Ultrasonic Sonicator -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="zap" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Ultrasonic Sonicator</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Ultrasonic Sonicator module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Equipment Card 10: Analysis Workstation -->
+                <div class="bg-gray-50 rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col group hover:shadow-lg transition-shadow">
+                    <div class="h-80 w-full bg-gray-100 border-b border-gray-200 relative flex flex-col items-center justify-center">
+                        <!-- Placeholder for future 3D model implementation -->
+                        <i data-lucide="monitor" class="w-16 h-16 text-gray-300 mb-4"></i>
+                        <span class="text-sm font-medium text-gray-400 border border-gray-300 rounded-full px-4 py-1">3D Model Pending</span>
+                    </div>
+                    <div class="p-8 flex flex-col flex-grow">
+                        <h4 class="text-2xl font-bold text-gray-900 mb-3">Analysis Workstation</h4>
+                        <p class="text-base text-gray-600 mb-6 flex-grow">Placeholder slot for the Analysis Workstation module. Future interactive 3D model will be integrated here.</p>
+                        <a href="equipment-placeholder.html" class="inline-flex items-center justify-center w-full px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition-colors shadow-sm cursor-not-allowed">
+                            Coming Soon
+                        </a>
+                    </div>
+                </div>
+</div>
+        </div>
+    </section>
+
 
     <!-- News & Momentum Pipeline (Updated to 10-Item Slider) -->
     <section id="news" class="py-16 bg-gray-50 border-b border-gray-200">
@@ -367,310 +1217,198 @@
         </div>
     </section>
 
-    <!-- Lab Resource Photo Slider (Updated to 10-Item Slider) -->
-    <section id="gallery" class="py-12 bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center mb-6">
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-900">Laboratory Infrastructure</h3>
-                    <p class="text-sm text-gray-500 mt-1">Empirical synthesis and characterization nodes</p>
+
+    <!-- Team & Collaborations -->
+    
+    <section id="team" class="py-20 bg-gray-50 border-t border-gray-200">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-12 border-b border-gray-200 pb-4 tracking-tight">Personnel Structure</h2>
+            
+            <!-- Personnel Cards Container -->
+            <div class="space-y-12 mb-16">
+                
+                <!-- PI Card -->
+                <div class="bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row">
+                    <!-- Left Column (Image) -->
+                    <div class="w-full md:w-1/3 bg-gray-100 border-r border-gray-100 relative min-h-[400px]">
+                        <img src="https://placehold.co/500x700/e2e8f0/004B87?text=Md.+Firoze+H.+Haque" alt="Md. Firoze H. Haque" class="absolute inset-0 w-full h-full object-cover">
+                    </div>
+                    <!-- Right Column (Data) -->
+                    <div class="w-full md:w-2/3 p-8 md:p-12 flex flex-col">
+                        <h4 class="text-3xl font-bold text-bracu mb-4 tracking-tight">Md. Firoze H. Haque, PhD</h4>
+                        
+                        <div class="text-gray-800 space-y-1 mb-6 text-base md:text-lg">
+                            <p class="font-bold text-gray-900 uppercase tracking-wider text-sm mb-2">Principal Investigator</p>
+                            <p>Associate Professor & Chairperson</p>
+                            <p>Department of Mathematics and Physical Sciences</p>
+                            <p>BRAC University</p>
+                        </div>
+                        
+                        <div class="flex items-center text-bracu mb-8">
+                            <i data-lucide="mail" class="w-5 h-5 mr-3 text-orange-500"></i>
+                            <a href="mailto:firoze.haque@bracu.ac.bd" class="hover:underline font-medium">firoze.haque@bracu.ac.bd</a>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 mt-auto pt-6 flex flex-wrap items-center gap-4 text-sm font-medium">
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-600 transition-colors"><i data-lucide="linkedin" class="w-4 h-4 mr-1"></i> LinkedIn</a>
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-400 transition-colors"><i data-lucide="twitter" class="w-4 h-4 mr-1"></i> Twitter</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="#" class="text-gray-600 hover:text-bracu transition-colors">Google Scholar</a>
+                            <a href="#" class="text-gray-600 hover:text-green-600 transition-colors">ORCID</a>
+                            <a href="#" class="text-gray-600 hover:text-orange-600 transition-colors">Scopus</a>
+                            <a href="#" class="text-gray-600 hover:text-teal-600 transition-colors">ResearchGate</a>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mr-4">SDGs Focus</p>
+                            <div class="flex gap-2">
+                                <img src="https://placehold.co/40x40/f97316/ffffff?text=7" alt="SDG 7" class="w-10 h-10 border border-gray-200 shadow-sm" title="Affordable and Clean Energy">
+                                <img src="https://placehold.co/40x40/3b82f6/ffffff?text=9" alt="SDG 9" class="w-10 h-10 border border-gray-200 shadow-sm" title="Industry, Innovation and Infrastructure">
+                                <img src="https://placehold.co/40x40/10b981/ffffff?text=13" alt="SDG 13" class="w-10 h-10 border border-gray-200 shadow-sm" title="Climate Action">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <!-- Navigation Arrows for Gallery -->
-                <div class="flex space-x-2">
-                    <button onclick="scrollSlider('gallery-slider-container', -1)"
-                        class="p-2 rounded-full bg-gray-100 hover:bg-bracu hover:text-white transition-colors text-gray-600 focus:outline-none shadow-sm">
-                        <i data-lucide="chevron-left" class="w-5 h-5"></i>
-                    </button>
-                    <button onclick="scrollSlider('gallery-slider-container', 1)"
-                        class="p-2 rounded-full bg-gray-100 hover:bg-bracu hover:text-white transition-colors text-gray-600 focus:outline-none shadow-sm">
-                        <i data-lucide="chevron-right" class="w-5 h-5"></i>
-                    </button>
+
+                <!-- Co-I Card -->
+                <div class="bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row">
+                    <!-- Left Column (Image) -->
+                    <div class="w-full md:w-1/3 bg-gray-100 border-r border-gray-100 relative min-h-[400px]">
+                        <img src="https://placehold.co/500x700/e2e8f0/004B87?text=Muhammad+Lutfor+Rahman" alt="Muhammad Lutfor Rahman" class="absolute inset-0 w-full h-full object-cover">
+                    </div>
+                    <!-- Right Column (Data) -->
+                    <div class="w-full md:w-2/3 p-8 md:p-12 flex flex-col">
+                        <h4 class="text-3xl font-bold text-bracu mb-4 tracking-tight">Muhammad Lutfor Rahman</h4>
+                        
+                        <div class="text-gray-800 space-y-1 mb-6 text-base md:text-lg">
+                            <p class="font-bold text-gray-900 uppercase tracking-wider text-sm mb-2">Co-Investigator</p>
+                            <p>Assistant Professor</p>
+                            <p>Department of Mathematics and Physical Sciences</p>
+                            <p>BRAC University</p>
+                        </div>
+                        
+                        <div class="flex items-center text-bracu mb-8">
+                            <i data-lucide="mail" class="w-5 h-5 mr-3 text-orange-500"></i>
+                            <a href="mailto:lutfor.rahman@bracu.ac.bd" class="hover:underline font-medium">lutfor.rahman@bracu.ac.bd</a>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 mt-auto pt-6 flex flex-wrap items-center gap-4 text-sm font-medium">
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-600 transition-colors"><i data-lucide="linkedin" class="w-4 h-4 mr-1"></i> LinkedIn</a>
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-400 transition-colors"><i data-lucide="twitter" class="w-4 h-4 mr-1"></i> Twitter</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="#" class="text-gray-600 hover:text-bracu transition-colors">Google Scholar</a>
+                            <a href="#" class="text-gray-600 hover:text-green-600 transition-colors">ORCID</a>
+                            <a href="#" class="text-gray-600 hover:text-orange-600 transition-colors">Scopus</a>
+                            <a href="#" class="text-gray-600 hover:text-teal-600 transition-colors">ResearchGate</a>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mr-4">SDGs Focus</p>
+                            <div class="flex gap-2">
+                                <img src="https://placehold.co/40x40/f97316/ffffff?text=7" alt="SDG 7" class="w-10 h-10 border border-gray-200 shadow-sm" title="Affordable and Clean Energy">
+                                <img src="https://placehold.co/40x40/3b82f6/ffffff?text=9" alt="SDG 9" class="w-10 h-10 border border-gray-200 shadow-sm" title="Industry, Innovation and Infrastructure">
+                                <img src="https://placehold.co/40x40/10b981/ffffff?text=13" alt="SDG 13" class="w-10 h-10 border border-gray-200 shadow-sm" title="Climate Action">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RA Card -->
+                <div class="bg-white border border-gray-100 shadow-sm flex flex-col md:flex-row">
+                    <!-- Left Column (Image) -->
+                    <div class="w-full md:w-1/3 bg-gray-100 border-r border-gray-100 relative min-h-[400px]">
+                        <img src="https://placehold.co/500x700/e2e8f0/004B87?text=Dholon+Kumar+Paul" alt="Dholon Kumar Paul" class="absolute inset-0 w-full h-full object-cover">
+                    </div>
+                    <!-- Right Column (Data) -->
+                    <div class="w-full md:w-2/3 p-8 md:p-12 flex flex-col">
+                        <h4 class="text-3xl font-bold text-bracu mb-4 tracking-tight">Dholon Kumar Paul</h4>
+                        
+                        <div class="text-gray-800 space-y-1 mb-6 text-base md:text-lg">
+                            <p class="font-bold text-gray-900 uppercase tracking-wider text-sm mb-2">Research Assistant</p>
+                            <p>Department of Mathematics and Physical Sciences</p>
+                            <p>BRAC University</p>
+                        </div>
+                        
+                        <div class="flex items-center text-bracu mb-8">
+                            <i data-lucide="mail" class="w-5 h-5 mr-3 text-orange-500"></i>
+                            <a href="mailto:dholon.paul@g.bracu.ac.bd" class="hover:underline font-medium">dholon.paul@g.bracu.ac.bd</a>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 mt-auto pt-6 flex flex-wrap items-center gap-4 text-sm font-medium">
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-600 transition-colors"><i data-lucide="linkedin" class="w-4 h-4 mr-1"></i> LinkedIn</a>
+                            <a href="#" class="flex items-center text-gray-600 hover:text-blue-400 transition-colors"><i data-lucide="twitter" class="w-4 h-4 mr-1"></i> Twitter</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="#" class="text-gray-600 hover:text-bracu transition-colors">Google Scholar</a>
+                            <a href="#" class="text-gray-600 hover:text-green-600 transition-colors">ORCID</a>
+                            <a href="#" class="text-gray-600 hover:text-orange-600 transition-colors">Scopus</a>
+                            <a href="#" class="text-gray-600 hover:text-teal-600 transition-colors">ResearchGate</a>
+                        </div>
+                        
+                        <div class="mt-6 pt-4 border-t border-gray-100 flex items-center">
+                            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mr-4">SDGs Focus</p>
+                            <div class="flex gap-2">
+                                <img src="https://placehold.co/40x40/f97316/ffffff?text=7" alt="SDG 7" class="w-10 h-10 border border-gray-200 shadow-sm" title="Affordable and Clean Energy">
+                                <img src="https://placehold.co/40x40/3b82f6/ffffff?text=9" alt="SDG 9" class="w-10 h-10 border border-gray-200 shadow-sm" title="Industry, Innovation and Infrastructure">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Gallery Slider Container -->
-            <div id="gallery-slider-container"
-                class="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 scrollbar-hide scroll-smooth">
-
-                <!-- Image Slide 1 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=HPC+Cluster+Node" alt="HPC Cluster"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">High-Performance Computing Cluster</h4>
-                    <p class="text-sm text-gray-600 mt-1">AMD Threadripper & NVIDIA A100 & RTX GPU's powering DFT
-                        simulations.
+            <!-- Bottom Row: Recruitment & Collaborations -->
+            <div class="grid md:grid-cols-2 gap-8 border-t border-gray-200 pt-12">
+                <!-- Recruitment Box -->
+                <div class="bg-blue-50 border border-blue-100 p-8 shadow-sm">
+                    <h3 class="text-xl font-bold text-bracu flex items-center mb-4">
+                        <i data-lucide="graduation-cap" class="h-6 w-6 mr-3"></i> Join ASMRL
+                    </h3>
+                    <p class="text-base text-gray-700 mb-6 leading-relaxed">
+                        We occasionally have openings for rigorous undergraduate and M.Sc. researchers within the MPS department. Candidates with baseline proficiencies in Python, Linux, or solid-state physics should apply.
                     </p>
+                    <p class="text-sm font-semibold text-gray-900 border-t border-blue-200 pt-4">Contact via Institutional Mail.</p>
                 </div>
 
-                <!-- Image Slide 2 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="images/furnace.png" alt="Nabertherm Furnace"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Nabertherm High-Temperature Furnace</h4>
-                    <p class="text-sm text-gray-600 mt-1">Thermal processing up to 1750°C for advanced ferrites
-                        synthesis.</p>
-                </div>
-
-                <!-- Image Slide 3 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="images/solar simulator.webp" alt="Characterization Equipment"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Optical & Electrical Characterization</h4>
-                    <p class="text-sm text-gray-600 mt-1">Keithley Source Measure Units (SMU) and calibrated Solar
-                        Simulators.</p>
-                </div>
-
-                <!-- Image Slide 4 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="images/spin coater.webp" alt="Laurell Spin Processor"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Laurell Spin Processor</h4>
-                    <p class="text-sm text-gray-600 mt-1">Thin-film deposition and device layer fabrication.</p>
-                </div>
-
-                <!-- Image Slide 5 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Ball+Milling" alt="Placeholder 5"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">High-Energy Ball Milling</h4>
-                    <p class="text-sm text-gray-600 mt-1">Nanoscale powder synthesis and mechanical alloying.</p>
-                </div>
-
-                <!-- Image Slide 6 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Hydraulic+Press" alt="Placeholder 6"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Hydraulic Pressing Station</h4>
-                    <p class="text-sm text-gray-600 mt-1">Pellet formation for solid-state characterization.</p>
-                </div>
-
-                <!-- Image Slide 7 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Glovebox+System" alt="Placeholder 7"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Inert Atmosphere Glovebox</h4>
-                    <p class="text-sm text-gray-600 mt-1">Handling moisture and oxygen-sensitive smart materials.</p>
-                </div>
-
-                <!-- Image Slide 8 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Fume+Hood" alt="Placeholder 8"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Chemical Synthesis Hood</h4>
-                    <p class="text-sm text-gray-600 mt-1">Wet-chemical processing and solvent management.</p>
-                </div>
-
-                <!-- Image Slide 9 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Sonicator" alt="Placeholder 9"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Ultrasonic Processing</h4>
-                    <p class="text-sm text-gray-600 mt-1">High-frequency sonication for material dispersion.</p>
-                </div>
-
-                <!-- Image Slide 10 -->
-                <div class="snap-center shrink-0 w-full sm:w-3/4 md:w-2/3 lg:w-1/2 flex flex-col group cursor-pointer">
-                    <div class="h-72 rounded-xl overflow-hidden shadow-sm border border-gray-200 relative">
-                        <img src="https://placehold.co/800x600/f8fafc/004B87?text=Workstation" alt="Placeholder 10"
-                            class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105">
-                        <div
-                            class="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        </div>
-                    </div>
-                    <h4 class="mt-4 text-lg font-bold text-gray-900">Data Analysis Workstation</h4>
-                    <p class="text-sm text-gray-600 mt-1">Local terminals for post-processing HPC simulation data.</p>
-                </div>
-
-            </div>
-        </div>
-    </section>
-
-    <!-- Research Domains -->
-    <section id="research" class="py-20 bg-white relative overflow-hidden">
-        <!-- Background Band Structure SVG -->
-        <svg class="absolute inset-0 w-full h-full pointer-events-none opacity-5 z-0" preserveAspectRatio="none"
-            viewBox="0 0 1000 400">
-            <!-- Grid lines for high symmetry points -->
-            <path d="M200,0 V400 M500,0 V400 M800,0 V400" stroke="#004B87" stroke-width="1" stroke-dasharray="4 4" />
-
-            <!-- Band structure curves -->
-            <path id="band-structure-path"
-                d="M0,200 Q100,100 200,200 T500,300 T800,150 T1000,200 M0,250 Q100,350 200,250 T500,150 T800,280 T1000,220 M0,100 Q100,0 200,120 T500,50 T800,100 T1000,80"
-                fill="none" stroke="#004B87" stroke-width="3" />
-            <path id="band-structure-path-2" d="M0,300 Q100,400 200,280 T500,380 T800,320 T1000,350" fill="none"
-                stroke="#22d3ee" stroke-width="2" />
-
-            <!-- Fermi level -->
-            <line x1="0" y1="225" x2="1000" y2="225" stroke="#ef4444" stroke-width="1" stroke-dasharray="10 5"
-                opacity="0.5" />
-
-            <!-- High symmetry labels -->
-            <text x="200" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">Γ</text>
-            <text x="500" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">X</text>
-            <text x="800" y="390" fill="#004B87" font-size="14" text-anchor="middle" font-family="serif">M</text>
-        </svg>
-
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div class="text-center mb-16">
-                <h2 class="text-base text-bracu font-semibold tracking-wide uppercase">Core Focus Areas</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
-                    Targeted Material Discovery
-                </p>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                <!-- Domain 1 -->
-                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
-                    <div
-                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
-                        <i data-lucide="sun" class="h-6 w-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Photovoltaics & Energy Storage</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed">
-                        Computational design and physical synthesis of highly stable, cost-effective novel solar
-                        absorbers (perovskite structures). Parallel development of high-capacity solid-state hydrogen
-                        storage networks.
-                    </p>
-                </div>
-                <!-- Domain 2 -->
-                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
-                    <div
-                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
-                        <i data-lucide="thermometer-snowflake" class="h-6 w-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Thermodynamics & Superconductivity</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed">
-                        Investigating structural phase transitions for magnetocaloric refrigeration to enable
-                        eco-friendly cooling. <i>Ab initio</i> structural modeling of complex lattices to develop
-                        high-temperature superconductors.
-                    </p>
-                </div>
-                <!-- Domain 3 -->
-                <div class="p-6 border border-gray-100 rounded-xl bg-gray-50 hover:shadow-lg transition-shadow">
-                    <div
-                        class="w-12 h-12 inline-flex items-center justify-center rounded-lg bg-blue-100 text-bracu mb-5">
-                        <i data-lucide="zap" class="h-6 w-6"></i>
-                    </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">Optoelectronic Semiconductors</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed">
-                        Rigorous electronic structure calculations and characterization of ultra-wide-bandgap materials
-                        (e.g., Ga2O3) for high-power electronics, alongside fundamental III-V optoelectronic materials
-                        (e.g., GaAs).
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Infrastructure (The Dual-Node System) -->
-    <section id="infrastructure" class="py-20 bg-gray-900 text-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-base text-blue-400 font-semibold tracking-wide uppercase">Technical Baseline</h2>
-                <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight sm:text-4xl">
-                    Closed-Loop Laboratory Resources
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-12">
-                <!-- Node A -->
-                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
-                    <div class="flex items-center mb-6">
-                        <i data-lucide="cpu" class="h-8 w-8 text-blue-400 mr-4"></i>
-                        <h3 class="text-2xl font-bold">Theoretical Computation</h3>
-                    </div>
-                    <ul class="space-y-4 text-gray-300">
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">Architecture:</strong> Custom HPC clusters driven by AMD
-                                Ryzen Threadripper processors (7000/9000 Series) with 1TB+ combined RAM.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">GPU Acceleration:</strong> Enterprise-grade NVIDIA RTX 6000
-                                Pro and RTX 4090 arrays dedicated to parallelized tensor operations.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">Methodology:</strong> Density Functional Theory (DFT) and
-                                AI/ML-driven quantum material simulations.</span>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Node B -->
-                <div class="bg-gray-800 rounded-xl p-8 border border-gray-700">
-                    <div class="flex items-center mb-6">
-                        <i data-lucide="flask-conical" class="h-8 w-8 text-blue-400 mr-4"></i>
-                        <h3 class="text-2xl font-bold">Empirical Synthesis</h3>
-                    </div>
-                    <ul class="space-y-4 text-gray-300">
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">Thermal Processing:</strong> Precision Nabertherm
-                                High-Temperature Furnace (rated to 1750°C).</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">Fabrication:</strong> End-to-end capabilities including
-                                Ball Mill, Hydraulic Presser, Sonicator, and Laurell Spin Processor.</span>
-                        </li>
-                        <li class="flex items-start">
-                            <i data-lucide="check-circle" class="h-5 w-5 text-blue-400 mr-3 mt-0.5 flex-shrink-0"></i>
-                            <span><strong class="text-white">Characterization:</strong> Advanced Keithley Source Measure
-                                Unit (SMU) system and calibrated Solar Simulator for optical validation.</span>
+                <!-- Collaborations -->
+                <div class="bg-white border border-gray-200 p-8 shadow-sm">
+                    <h3 class="text-xl font-bold text-gray-900 border-b border-gray-200 pb-4 mb-6 flex items-center">
+                        <i data-lucide="network" class="h-5 w-5 mr-3 text-orange-500"></i> Institutional Partnerships
+                    </h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start text-base text-gray-700">
+                            <div class="min-w-2 h-2 mt-2 bg-bracu mr-4"></div>
+                            <span><strong>Solid State Lab, BUET:</strong> Collaborative research on structural/magnetic properties of solid-state systems.</span>
                         </li>
                     </ul>
                 </div>
             </div>
+
         </div>
     </section>
+
 
     <!-- Publications -->
+    
+    <!-- Alumni & Researchers Section (Physics Grid) -->
+    <section id="alumni-researchers" class="py-20 bg-white overflow-hidden relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-8 relative z-10 pointer-events-none">
+            <h2 class="text-base text-bracu font-semibold tracking-wide uppercase">Members</h2>
+            <p class="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                Current & Alumni Researchers
+            </p>
+            <p class="text-gray-500 mt-2 text-sm">Drag to pan. Hover to expand.</p>
+        </div>
+        
+        <!-- Apple Watch Style Grid Container -->
+        <div id="researcher-grid-container" class="relative w-full h-[500px] cursor-grab active:cursor-grabbing overflow-hidden flex items-center justify-center border-y border-gray-200">
+            <!-- Background aesthetic -->
+            <div class="absolute inset-0 opacity-10 bg-[linear-gradient(#004B8733_1px,transparent_1px),linear-gradient(90deg,#004B8733_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+            
+            <div id="researcher-grid-world" class="absolute left-1/2 top-1/2 w-0 h-0 transition-transform duration-75 ease-out" style="transform: translate(50%, 50%);">
+                <!-- Nodes injected by JS -->
+            </div>
+        </div>
+    </section>
+
     <section id="publications" class="py-20 bg-gray-50">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-extrabold text-gray-900 mb-10 border-b border-gray-300 pb-4">Selected High-Impact
@@ -678,134 +1416,44 @@
 
             <div class="space-y-6">
                 <!-- Pub 1 -->
-                <div
-                    class="paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm">
-                    <h3 class="text-lg font-bold text-bracu mb-2">An integrated DFT + U and device simulation design of
+                <a href="https://doi.org/10.1038/s41598-026-46832-z" target="_blank" class="block paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<h3 class="text-lg font-bold text-bracu mb-2">An integrated DFT + U and device simulation design of
                         doped CsGeCl3 for high efficiency flexible solar absorbers</h3>
                     <p class="text-sm text-gray-800 mb-2"><strong>Paul, D.K.</strong>, Zulkarnain, S., Somayia et al.
                     </p>
                     <div class="flex items-center text-xs text-gray-500">
                         <span class="mr-4"><i>Scientific Reports</i> (2026)</span>
-                        <a href="https://doi.org/10.1038/s41598-026-46832-z" target="_blank"
-                            class="text-bracuLight hover:underline font-medium">DOI: 10.1038/s41598-026-46832-z</a>
+                        
+                        <span class="text-bracuLight font-medium">DOI: 10.1038/s41598-026-46832-z</span>
                     </div>
-                </div>
+                </a>
 
                 <!-- Pub 2 -->
-                <div
-                    class="paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm">
-                    <h3 class="text-lg font-bold text-bracu mb-2">Impact of doping and hydrostatic pressure on
+                <a href="https://doi.org/10.1016/j.chphma.2024.06.006" target="_blank" class="block paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<h3 class="text-lg font-bold text-bracu mb-2">Impact of doping and hydrostatic pressure on
                         structural, electronic, optical, and mechanical properties of novel double halide perovskite
                         Cs2LiGaBr6</h3>
                     <p class="text-sm text-gray-800 mb-2"><strong>Paul, D. K.</strong>, Chaudhry, W. T., Mamun, S. M.
                         N., Rahman, M. L., Haider, A. F. M. Y., & Haque, F. H.</p>
                     <div class="flex items-center text-xs text-gray-500">
                         <span class="mr-4"><i>Chemical Physics of Materials</i>, 3, 422–430 (2024)</span>
-                        <a href="https://doi.org/10.1016/j.chphma.2024.06.006" target="_blank"
-                            class="text-bracuLight hover:underline font-medium">DOI: 10.1016/j.chphma.2024.06.006</a>
+                        
+                        <span class="text-bracuLight font-medium">DOI: 10.1016/j.chphma.2024.06.006</span>
                     </div>
-                </div>
+                </a>
 
                 <!-- Pub 3 -->
-                <div
-                    class="paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm">
-                    <h3 class="text-lg font-bold text-bracu mb-2">DFT investigations into the physical properties of a
+                <a href="https://doi.org/10.1016/j.jallcom.2019.153547" target="_blank" class="block paper-card bg-white p-6 rounded-lg border border-gray-200 border-l-4 border-l-gray-300 shadow-sm hover:shadow-md transition-shadow cursor-pointer">
+<h3 class="text-lg font-bold text-bracu mb-2">DFT investigations into the physical properties of a
                         MAB phase Cr4AlB4</h3>
                     <p class="text-sm text-gray-800 mb-2">Ali, M. M., Hadi, M. A., Rahman, M. L., Haque, F. H., Haider,
                         A. F. M. Y., & Aftabuzzaman, M.</p>
                     <div class="flex items-center text-xs text-gray-500">
                         <span class="mr-4"><i>Journal of Alloys and Compounds</i>, 821, 153547 (2020)</span>
-                        <a href="https://doi.org/10.1016/j.jallcom.2019.153547" target="_blank"
-                            class="text-bracuLight hover:underline font-medium">DOI: 10.1016/j.jallcom.2019.153547</a>
+                        
+                        <span class="text-bracuLight font-medium">DOI: 10.1016/j.jallcom.2019.153547</span>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Team & Collaborations -->
-    <section id="team" class="py-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid md:grid-cols-3 gap-16">
-                <!-- Team Section -->
-                <div class="md:col-span-2">
-                    <h2 class="text-3xl font-extrabold text-gray-900 mb-8">Personnel Structure</h2>
-                    <div class="space-y-8">
-                        <!-- PI -->
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 mt-1">
-                                <div
-                                    class="h-12 w-12 rounded-full bg-bracu text-white flex items-center justify-center font-bold text-xl">
-                                    FH
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <h4 class="text-xl font-bold text-gray-900">Md. Firoze H. Haque, PhD</h4>
-                                <p class="text-sm font-medium text-bracu uppercase tracking-wide">Principal Investigator
-                                </p>
-                                <p class="text-gray-500 text-sm mt-1">Associate Professor & Chairperson, Department of
-                                    Mathematics and Physical Sciences.</p>
-                            </div>
-                        </div>
-
-                        <!-- Co-I -->
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 mt-1">
-                                <div
-                                    class="h-10 w-10 rounded-full bg-blue-100 text-bracu border border-blue-200 flex items-center justify-center font-bold">
-                                    MR
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <h4 class="text-lg font-bold text-gray-900">Muhammad Lutfor Rahman</h4>
-                                <p class="text-sm font-medium text-gray-600">Assistant Professor | Co-Investigator</p>
-                            </div>
-                        </div>
-
-                        <!-- RA -->
-                        <div class="flex items-start">
-                            <div class="flex-shrink-0 mt-1">
-                                <div
-                                    class="h-10 w-10 rounded-full bg-blue-100 text-bracu border border-blue-200 flex items-center justify-center font-bold">
-                                    DP
-                                </div>
-                            </div>
-                            <div class="ml-4">
-                                <h4 class="text-lg font-bold text-gray-900">Dholon Kumar Paul</h4>
-                                <p class="text-sm font-medium text-gray-600">Research Assistant</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Sidebar: Recruitment & Collaboration -->
-                <div>
-                    <!-- Recruitment Box -->
-                    <div class="bg-blue-50 border border-blue-100 rounded-lg p-6 mb-8">
-                        <h3 class="text-lg font-bold text-bracu flex items-center mb-3">
-                            <i data-lucide="graduation-cap" class="h-5 w-5 mr-2"></i> Join ASMRL
-                        </h3>
-                        <p class="text-sm text-gray-700 mb-4 leading-relaxed">
-                            We occasionally have openings for rigorous undergraduate and M.Sc. researchers within the
-                            MPS department. Candidates with baseline proficiencies in Python, Linux, or solid-state
-                            physics should apply.
-                        </p>
-                        <p class="text-xs font-semibold text-gray-900">Contact via Institutional Mail.</p>
-                    </div>
-
-                    <!-- Collaborations -->
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-900 border-b border-gray-200 pb-2 mb-4">Institutional
-                            Partnerships</h3>
-                        <ul class="space-y-3">
-                            <li class="flex items-start text-sm text-gray-700">
-                                <i data-lucide="network" class="h-4 w-4 text-gray-400 mr-2 mt-0.5"></i>
-                                <span><strong>Solid State Lab, BUET:</strong> Collaborative research on
-                                    structural/magnetic properties of solid-state systems.</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                </a>
             </div>
         </div>
     </section>
@@ -819,7 +1467,7 @@
                 <div>
                     <h3 class="text-xl font-bold text-white mb-4">Advanced Smart Materials Research Laboratory</h3>
                     <p class="text-gray-400 text-sm mb-2">Department of Mathematics and Physical Sciences</p>
-                    <p class="text-gray-400 text-sm mb-6">Brac University, Dhaka, Bangladesh</p>
+                    <p class="text-gray-400 text-sm mb-6">BRAC University, Dhaka, Bangladesh</p>
                     <a href="mailto:contact@asmrl.org"
                         class="inline-flex items-center text-bracuLight hover:text-white transition-colors text-sm font-medium">
                         <i data-lucide="mail" class="h-4 w-4 mr-2"></i> Contact via Institutional Email
@@ -1221,6 +1869,224 @@
             }
             animate();
         });
+        // Vanilla JS Carousel (Hero)
+        window.addEventListener('load', () => {
+            const images = document.querySelectorAll('.carousel-img');
+            if(images.length > 0) {
+                let currentIndex = 0;
+                setInterval(() => {
+                    images[currentIndex].classList.replace('opacity-100', 'opacity-0');
+                    currentIndex = (currentIndex + 1) % images.length;
+                    images[currentIndex].classList.replace('opacity-0', 'opacity-100');
+                }, 2000); // 2 second interval
+            }
+            
+            // Auto-scroll News Slider at 2 second interval
+            const newsSlider = document.getElementById('news-slider-container');
+            if(newsSlider) {
+                setInterval(() => {
+                    // Automatically scroll right by one card's width (roughly)
+                    const scrollAmount = newsSlider.clientWidth * 0.8;
+                    // If we reach the end, jump back to start
+                    if (newsSlider.scrollLeft + newsSlider.clientWidth >= newsSlider.scrollWidth - 10) {
+                        newsSlider.scrollTo({ left: 0, behavior: 'smooth' });
+                    } else {
+                        newsSlider.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    }
+                }, 2000);
+            }
+        });
+    
+        // ==========================================
+        // Researcher Physics Grid (Apple Watch Style)
+        // ==========================================
+        window.addEventListener('load', () => {
+            const container = document.getElementById('researcher-grid-container');
+            const world = document.getElementById('researcher-grid-world');
+            if(!container || !world) return;
+
+            const students = [
+                { id: 1, name: "Alice Johnson", session: "Spring 2026", img: "https://placehold.co/200x200/2563eb/ffffff?text=AJ", radius: 65 },
+                { id: 2, name: "Bob Smith", session: "Fall 2025", img: "https://placehold.co/200x200/16a34a/ffffff?text=BS", radius: 85 },
+                { id: 3, name: "Carol Davis", session: "Spring 2025", img: "https://placehold.co/200x200/d97706/ffffff?text=CD", radius: 75 },
+                { id: 4, name: "David Lee", session: "Fall 2024", img: "https://placehold.co/200x200/dc2626/ffffff?text=DL", radius: 60 },
+                { id: 5, name: "Eva Martinez", session: "Spring 2024", img: "https://placehold.co/200x200/9333ea/ffffff?text=EM", radius: 80 }
+            ];
+
+            const nodes = [];
+
+            students.forEach(student => {
+                const el = document.createElement('div');
+                el.className = 'researcher-node';
+                el.style.width = (student.radius * 2) + 'px';
+                el.style.height = (student.radius * 2) + 'px';
+                
+                el.innerHTML = `
+                    <img src="${student.img}" alt="${student.name}">
+                    <div class="researcher-info">
+                        <p class="text-white font-bold text-sm leading-tight">${student.name}</p>
+                        <p class="text-gray-300 text-[10px] mt-1">${student.session}</p>
+                    </div>
+                `;
+
+                // Hover logic for dynamic expansion
+                el.addEventListener('mouseenter', () => {
+                    el.style.width = (student.radius * 2.8) + 'px';
+                    el.style.height = (student.radius * 2.8) + 'px';
+                });
+                el.addEventListener('mouseleave', () => {
+                    el.style.width = (student.radius * 2) + 'px';
+                    el.style.height = (student.radius * 2) + 'px';
+                });
+
+                world.appendChild(el);
+
+                nodes.push({
+                    el: el,
+                    x: (Math.random() - 0.5) * (container.clientWidth * 0.8 || 800),
+                    y: (Math.random() - 0.5) * 300,
+                    vx: 0,
+                    vy: 0,
+                    baseRadius: student.radius
+                });
+            });
+
+            // Physics Loop
+            function updatePhysics() {
+                const damping = 0.75; // Increased friction to stabilize layout
+                
+                nodes.forEach(node => {
+                    node.currentRadius = (parseFloat(node.el.style.width) / 2) || node.baseRadius;
+                });
+
+                for(let i=0; i<nodes.length; i++) {
+                    const n1 = nodes[i];
+                    
+                    // 1. Hard Boundary Bouncing
+                    const boundX = (container.clientWidth || 1000) / 2 - n1.currentRadius - 20;
+                    const boundY = (container.clientHeight || 500) / 2 - n1.currentRadius - 20;
+                    
+                    // If they hit the wall, reverse velocity (bounce) and push them inside
+                    if (n1.x < -boundX) {
+                        n1.x = -boundX;
+                        n1.vx = Math.abs(n1.vx) * 0.5 + 2; 
+                    } else if (n1.x > boundX) {
+                        n1.x = boundX;
+                        n1.vx = -Math.abs(n1.vx) * 0.5 - 2;
+                    }
+                    
+                    if (n1.y < -boundY) {
+                        n1.y = -boundY;
+                        n1.vy = Math.abs(n1.vy) * 0.5 + 2;
+                    } else if (n1.y > boundY) {
+                        n1.y = boundY;
+                        n1.vy = -Math.abs(n1.vy) * 0.5 - 2;
+                    }
+
+                    for(let j=i+1; j<nodes.length; j++) {
+                        const n2 = nodes[j];
+                        let dx = n2.x - n1.x;
+                        let dy = n2.y - n1.y;
+                        
+                        // Fail-safe to prevent NaN explosions
+                        if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) {
+                            dx = (Math.random() - 0.5) * 10;
+                            dy = (Math.random() - 0.5) * 10;
+                        }
+                        
+                        let dist = Math.sqrt(dx*dx + dy*dy);
+                        if (dist < 0.01) dist = 0.01;
+
+                        const targetDist = n1.currentRadius + n2.currentRadius + 20; // Padding between nodes
+
+                        if (dist < targetDist) {
+                            // Heavy repulsion when overlapping (Spring force)
+                            const force = (targetDist - dist) * 0.5;
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            n1.vx -= fx;
+                            n1.vy -= fy;
+                            n2.vx += fx;
+                            n2.vy += fy;
+                        } else {
+                            // Gentle background repulsion to keep them distributed
+                            const push = 300 / (dist * dist);
+                            n1.vx -= (dx / dist) * push;
+                            n1.vy -= (dy / dist) * push;
+                            n2.vx += (dx / dist) * push;
+                            n2.vy += (dy / dist) * push;
+                        }
+                    }
+
+                    // Velocity clamping to prevent infinite NaN teleportation
+                    n1.vx = Math.max(-30, Math.min(30, n1.vx));
+                    n1.vy = Math.max(-30, Math.min(30, n1.vy));
+
+                    if (isNaN(n1.vx)) n1.vx = 0;
+                    if (isNaN(n1.vy)) n1.vy = 0;
+
+                    n1.vx *= damping;
+                    n1.vy *= damping;
+                    n1.x += n1.vx;
+                    n1.y += n1.vy;
+
+                    n1.el.style.left = n1.x + 'px';
+                    n1.el.style.top = n1.y + 'px';
+                }
+                requestAnimationFrame(updatePhysics);
+            }
+            updatePhysics();
+
+            // Dragging Logic (Pan the world)
+            let isDragging = false;
+            let startX, startY;
+            let worldX = 0, worldY = 0;
+
+            container.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX - worldX;
+                startY = e.clientY - worldY;
+                container.classList.add('cursor-grabbing');
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if(!isDragging) return;
+                worldX = e.clientX - startX;
+                worldY = e.clientY - startY;
+                
+                // Limit panning to prevent losing the cluster
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+                container.classList.remove('cursor-grabbing');
+            });
+            
+            // Touch support for mobile
+            container.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX - worldX;
+                startY = e.touches[0].clientY - worldY;
+            }, {passive: true});
+            
+            window.addEventListener('touchmove', (e) => {
+                if(!isDragging) return;
+                worldX = e.touches[0].clientX - startX;
+                worldY = e.touches[0].clientY - startY;
+                worldX = Math.max(-400, Math.min(400, worldX));
+                worldY = Math.max(-400, Math.min(400, worldY));
+                world.style.transform = `translate(calc(50% + ${worldX}px), calc(50% + ${worldY}px))`;
+            }, {passive: true});
+            
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        });
+
     </script>
 </body>
 
