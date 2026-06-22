@@ -670,31 +670,33 @@
     <!-- Hero Section -->
     <section id="home" class="relative bg-white overflow-hidden border-b border-gray-200 py-16 lg:py-24">
         <div class="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Row 1: Main Heading -->
+            <div class="text-center max-w-4xl mx-auto mb-12">
+                <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl lg:text-6xl drop-shadow-sm">
+                    <span class="block">Center for Advanced Smart</span>
+                    <span class="block text-bracu mt-2">Materials Research</span>
+                </h1>
+                <p class="mt-6 text-base text-gray-600 sm:text-lg mx-auto md:text-xl font-medium leading-relaxed">
+                    Bridging theoretical computation and empirical synthesis. ASMRL accelerates the discovery of next-generation optoelectronics, energy storage, and superconducting systems through rigorous <i>ab initio</i> modeling and high-temperature fabrication.
+                </p>
+            </div>
+
+            <!-- Row 2: Visuals & Interactive Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center h-full">
                 
-                <!-- Left Column: Carousel -->
-                <div class="relative w-full h-[400px] rounded-xl overflow-hidden shadow-lg border border-gray-200 group">
-                    <div id="hero-carousel" class="w-full h-full relative">
-                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100" src="https://placehold.co/600x800/004B87/ffffff?text=BRACU+Campus" alt="Campus">
-                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/600x800/f8fafc/004B87?text=Publication+Figure+1" alt="Publication 1">
-                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/600x800/e2e8f0/004B87?text=Lab+Equipment" alt="Equipment">
+                <!-- Left Column (2/3): Carousel -->
+                <div class="lg:col-span-2 relative w-full h-[400px] md:h-[500px] rounded-xl overflow-hidden shadow-lg border border-gray-200 group">
+                    <div id="hero-carousel" class="w-full h-full relative z-0">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-100" src="https://placehold.co/1200x800/004B87/ffffff?text=BRACU+Campus" alt="Campus">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/1200x800/f8fafc/004B87?text=Publication+Figure+1" alt="Publication 1">
+                        <img class="carousel-img absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 opacity-0" src="https://placehold.co/1200x800/e2e8f0/004B87?text=Lab+Equipment" alt="Equipment">
                     </div>
-                    <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-bold text-bracu shadow">ASMRL Facilities & Research</div>
+                    
+                    <div class="absolute bottom-4 left-4 z-10 bg-white/90 backdrop-blur px-3 py-1 rounded text-xs font-bold text-bracu shadow">ASMRL Facilities & Research</div>
                 </div>
 
-                <!-- Middle Column: Text -->
-                <div class="text-center flex flex-col justify-center px-4">
-                    <h1 class="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl lg:text-5xl mt-6">
-                        <span class="block">Center for Advanced Smart</span>
-                        <span class="block text-bracu">Materials Research</span>
-                    </h1>
-                    <p class="mt-4 text-base text-gray-500 sm:text-lg mx-auto md:text-xl">
-                        Bridging theoretical computation and empirical synthesis. ASMRL accelerates the discovery of next-generation optoelectronics, energy storage, and superconducting systems through rigorous <i>ab initio</i> modeling and high-temperature fabrication.
-                    </p>
-                    <!-- Removed buttons per user request -->
-                </div>
-                <!-- Right Column: Interactive Zone -->
-                <div id="hero-interactive-zone" class="h-[400px] w-full bg-white flex flex-col items-center justify-center overflow-hidden rounded-xl border border-gray-200 relative shadow-inner">
+                <!-- Right Column (1/3): Interactive Zone -->
+                <div id="hero-interactive-zone" class="h-[400px] md:h-[500px] w-full bg-white flex flex-col items-center justify-center overflow-hidden rounded-xl border border-gray-200 relative shadow-inner">
                     <!-- Background Grid effect (Darker for white bg) -->
                     <div class="absolute inset-0 opacity-10 bg-[linear-gradient(#004B8733_1px,transparent_1px),linear-gradient(90deg,#004B8733_1px,transparent_1px)] bg-[size:40px_40px] z-0 pointer-events-none">
                     </div>
