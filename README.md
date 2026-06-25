@@ -1,4 +1,4 @@
-# Advanced Smart Materials Research Laboratory (ASMRL)
+# Advanced Smart Materials Research Laboratory (ASMRL) Center
 
 **Digital Infrastructure & Public Portfolio** Department of Mathematics and Physical Sciences | Brac University  
 [asmrl.org](https://asmrl.org)
